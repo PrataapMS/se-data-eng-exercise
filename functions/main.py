@@ -29,7 +29,7 @@ def load_csv_to_bigquery(file_name, bucket_name):
     print(f"Loaded data from {file_name}")
 
     # Define BigQuery dataset and table
-    dataset_id = 'movies_data'
+    dataset_id = 'movies_data_prataap'
     table_id = 'movies_raw'
     table_ref = bigquery_client.dataset(dataset_id).table(table_id)
 
@@ -58,7 +58,7 @@ def load_csv_to_bigquery(file_name, bucket_name):
 
 def main(event, context):
 
-    file = event
+    file = eventmovies_2024091116_35_00.csvz
     bucket_name = file['bucket']
     file_name = file['name']
 
