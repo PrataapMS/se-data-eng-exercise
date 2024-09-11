@@ -58,7 +58,7 @@ def load_csv_to_bigquery(file_name, bucket_name):
 
 def main(event, context):
 
-    file = eventmovies_2024091116_35_00.csvz
+    file = event
     bucket_name = file['bucket']
     file_name = file['name']
 
