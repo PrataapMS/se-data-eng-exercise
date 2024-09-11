@@ -28,6 +28,7 @@ jobs:
     - name: Deploy Cloud Function
       run: |
         gcloud functions deploy process-movies-data-function \
+          --no-gen2
           --runtime python39 \
           --trigger-bucket ${{ secrets.GCP_LANDING_BUCKET }} \
           --entry-point main \
