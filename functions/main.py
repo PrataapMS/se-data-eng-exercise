@@ -39,7 +39,7 @@ def load_csv_to_bigquery(file_name, bucket_name):
     job_config = bigquery.LoadJobConfig(
         source_format=bigquery.SourceFormat.CSV,
         skip_leading_rows=1,
-        autodetect=True,
+        autodetect=False,
         ignore_unknown_values=True,
         write_disposition=bigquery.WriteDisposition.WRITE_APPEND
     )
