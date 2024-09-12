@@ -8,7 +8,6 @@ resource "google_cloudfunctions_function" "process_file" {
   source_archive_object = google_storage_bucket_object.movies_data_loader.name
 
   environment_variables = {
-    TARGET_BUCKET = google_storage_bucket.de_example_bucket.name
   }
 
   event_trigger {
