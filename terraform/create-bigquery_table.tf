@@ -10,10 +10,6 @@ resource "google_bigquery_table" "movies_raw" {
 
   schema = jsonencode([
     {
-      "name" = "load_date"
-      "type" = "DATETIME"
-    },
-    {
       "name" = "adult"
       "type" = "STRING"
     },
@@ -108,6 +104,11 @@ resource "google_bigquery_table" "movies_raw" {
     {
       "name" = "vote_count"
       "type" = "STRING"
+    },
+    {
+      "name" = "load_date"
+      "type" = "DATETIME",
+      "defaultValueExpression": "CURRENT_DATETIME"
     }
 ])
 }

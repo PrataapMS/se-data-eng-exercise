@@ -1,60 +1,53 @@
-import os
-import datetime
-from google.cloud import storage, bigquery
-import logging
+from google.cloud import bigquery
 
-def load_csv_to_bigquery(file_name, bucket_name):
+from config import *
+
+
+def load_csv_to_bigquery(file_name, bucket_name, table_ref):
     if not file_name.endswith('.csv'):
         print(f"Invalid file: {file_name}, skipped from processing.")
         return
 
-    # Extract timestamp from file name
-    timestamp_str = file_name[7:-4]  # Remove 'movies_' prefix and '.csv' suffix
-    try:
-        timestamp = datetime.datetime.strptime(timestamp_str, "%Y%m%d%H_%M_%S")
-    except ValueError:
-        print(f"Invalid timestamp in file name: {file_name}. Skipping.")
-        return
-
-    # Initialize clients
-    storage_client = storage.Client()
+    # Initialize client
     bigquery_client = bigquery.Client()
 
-    print(f"Loading data from {file_name}")
-
-    # Download the CSV file from the bucket
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(file_name)
-
-    print(f"Loaded data from {file_name}")
-
     # Define BigQuery dataset and table
-    dataset_id = 'movies_data_prataap'
-    table_id = 'movies_raw'
-    table_ref = bigquery_client.dataset(dataset_id).table(table_id)
-
-    print(f"Loading {file_name} to BigQuery.")
+    gcs_uri = f"gs://{bucket_name}/{file_name}"
+    print(f"Loading {file_name} from {gcs_uri} to BigQuery")
 
     # Load data into BigQuery
     job_config = bigquery.LoadJobConfig(
         source_format=bigquery.SourceFormat.CSV,
         skip_leading_rows=1,
         autodetect=False,
-        ignore_unknown_values=True,
-        write_disposition=bigquery.WriteDisposition.WRITE_APPEND
+        schema=get_schema_without_default_value_columns(bigquery_client, table_ref),
+        write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
     )
 
     # Load CSV data into BigQuery
-    with blob.open("r") as source_file:
-        job = bigquery_client.load_table_from_file(source_file, table_ref, job_config=job_config)
+    load_job = bigquery_client.load_table_from_uri(
+        gcs_uri,
+        table_ref,
+        job_config=job_config
+    )
 
-    print("Job loaded.")
-
-    job.result()  # Wait for the job to complete.
+    load_job.result()  # Wait for the job to complete.
 
     print("Job finished.")
 
-    print(f"Loaded {job.output_rows} rows into {dataset_id}:{table_id}.")
+    print(f"Loaded {load_job.output_rows} rows into {table_ref}.")
+
+
+def get_schema_without_default_value_columns(bigquery_client, table_ref):
+    default_value_columns = ["load_date"]
+    schema = []
+    for schema_field in bigquery_client.get_table(table_ref).schema:
+        if schema_field.name not in default_value_columns:
+            schema.append(
+                bigquery.SchemaField(name=schema_field.name, field_type=schema_field.field_type, mode=schema_field.mode)
+            )
+    return schema
+
 
 def main(event, context):
 
@@ -62,4 +55,7 @@ def main(event, context):
     bucket_name = file['bucket']
     file_name = file['name']
 
-    load_csv_to_bigquery(file_name, bucket_name)
+    if file_name.startswith('movies'):
+        load_csv_to_bigquery(file_name, bucket_name, movies_table_name)
+    elif file_name.startswith('movies'):
+        load_csv_to_bigquery(file_name, bucket_name, ratings_table_name)
