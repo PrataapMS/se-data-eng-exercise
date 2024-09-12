@@ -19,5 +19,5 @@ resource "google_cloudfunctions_function" "process_file" {
 resource "google_storage_bucket_object" "movies_data_loader" {
   name   = "movies-data-loader-function"
   bucket = google_storage_bucket.de_example_bucket.name
-  source = "../functions/movies-data-loader-function.zip"
+  source = "../functions/package/movies-data-loader-function.zip"
 }
