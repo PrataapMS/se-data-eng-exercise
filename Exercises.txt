@@ -1,0 +1,212 @@
+0. Getting Started
+
+
+If you are reading this then it probably means that you are in a batch of people doing the data engineering mini project. You should have been added to a google group that has access to GCP resources to complete the project. You need to make sure that you choose ee-india-se-data project when accessing the google console. You will have access to bigquery and cloud functions which is enough for the scope of the project.
+
+-------------------------------------------------------------------------------------------------------------------
+1.
+Create Landing Bucket on GCP
+
+
+
+One of the most common things in data engineering is loading data from object stores such as AWS S3 and Google storage. To do that however, we need to have a bucket setup with the right access.
+It is desirable to use an IaC tool such as Terraform to set cloud resources such as buckets.
+
+In this story, you would need to
+
+1. Create a repo for your code called se-data-eng-exercise (it could be on Github)
+2. Create a directory called terraform in it (there will be other things such as dbt etc in future)
+3. Use terraform to create a bucket for landing with your name in it (eg. se-data-landing-uttam)
+4. Make sure that this bucket is not publicly accessible
+
+-------------------------------------------------------------------------------------------------------------------
+2.
+Create DataSet on BigQuery
+
+In this exercise, we are going to ingest movie data files. To do that we need to first ingest everything into a “raw layer” before we clean the data and put it into a “curated layer” and then finally into a “presentation layer” (which is user specific). For this purpose we need to first create a Dataset on BigQuery (like a schema).
+In this story use Terraform to create a dataset called “movies_data_<your_name>.
+You can use this Terraform module to do it.
+
+-------------------------------------------------------------------------------------------------------------------
+3.
+Create Raw Layer Table for movies
+
+The first file that we are going to ingest is movies data from IMDB. It will be in CSV format.
+This is a sample csv
+It has the following columns :
+        adult
+        belongs_to_collection
+        budget
+        genres
+        homepage
+        id
+        imdb_id
+        original_language
+        original_title
+        overview
+        popularity
+        poster_path
+        production_companies
+        production_countries
+        release_date
+        revenue
+        runtime
+        spoken_languages
+        status
+        tagline,
+        title,
+        video,
+        vote_average,
+        vote_count
+
+
+Create a table called movies_raw in the dataset movies_dataset_<your_name> using this Terraform module.
+
+You need to make sure all the column types are strings. The reason for this is Postell’s law. Always load everything first and then clean/transform (ELT).
+
+We also need a load_date of type datetime. This helps us isolate bugs and we can also do cool things like nuke the raw layer from one day and reload it.
+
+-------------------------------------------------------------------------------------------------------------------
+4.1
+Create a event based cloud function on the landing bucket uploads
+
+Given a file called movies_yyyymmddh_mm_ss lands in the landing bucket, it should trigger an event and a function should be invoked due to the upload
+
+For this you need to
+Create an event on the bucket that triggers the cloud function using Terraform
+Create a cloud function that listens to the new uploads of movies_yyyymmddhh_mm_ss.csv file in the landing bucket
+Copy this file into the bucket with the name movies_yyyymmddhh_mm_ss.csv
+Test if the function gets invoked
+
+This is an example of the “Choreographed” style of data pipeline. In this style, an event such as a file landing on a bucket triggers ingestion. Another way of doing the same thing is by “Orchestration”. An Airflow DAG runs periodically and checks for new files and ingests them when it finds them.
+
+Choreographed Load
+
+
+Orchestrated Load
+
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+4.2
+Update the cloud function and deploy it via github actions
+
+Given the cloud function is invoked every time a file is uploaded to the bucket, it should automatically be ingested into the <your_dataset>.movies_raw table
+
+
+For this you need to
+Update the cloud function to listen to the event and load the csv from storage into the raw GBQ table
+Deploy this from Github actions, make sure you don’t expose credentials.
+
+-------------------------------------------------------------------------------------------------------------------
+
+5.
+Load ratings from landing bucket to raw layer
+
+Given a file called ratings_yyyymmddh:m:s lands in the landing bucket, it should automatically be ingested into the <your_dataset>.ratings_raw table. The sample file is here
+
+For this you need to
+Create a schema for ratings using terraform
+Create a cloud function that loads the file into bigquery (deploy this from Github actions, make sure you don’t expose credentials)
+Create an event on the bucket that triggers the cloud function using Terraform
+Copy this file (this is large. Around 350 MB) into the bucket with the name ratings_yyyymmddhh:mm:ss.csv
+Test if the file gets ingested
+
+The schema of ratings is as follows:
+    userId
+    movieId
+    rating
+    timestamp
+
+-------------------------------------------------------------------------------------------------------------------
+6.
+Move Movies into curate layer
+
+Given <your_dataset>.movies.raw has been loaded from a file, move this data into a table/view called <your_dataset>.movies_curate. The data should be cast to the right data types. For example numbers as NUMERIC, booleans as BOOL, json strings as JSON. It is also good practice to have a load time as a column like the raw layer (it helps in debugging)
+For this you need to
+Create a dbt model called movies_raw_to_curate.sql
+Write unit tests to test your sql
+Run dbt from your local machine
+
+This story requires you to know DBT, so make sure you understand the basics of DBT before starting.
+This is data that is “full load” ie. you get the whole dataset every time you load the file.
+Choose an appropriate materialisation (table vs view) based on what you think fits.
+
+P.S. You may find some bad data (for example, a json field that can’t be parsed). It is okay to ignore this and insert null for now. We will come to data quality in a future story.
+
+
+-------------------------------------------------------------------------------------------------------------------
+7.
+Move Ratings into curate layer
+
+Given <your_dataset>.ratings.raw has been loaded from a file, move this data into a table/view called <your_dataset>.ratings_curate. The data should be cast to the right data types. For example numbers as NUMERIC, booleans as BOOL, json strings as JSON. It is also good practice to have a load time as a column like the raw layer (it helps in debugging)
+For this you need to
+Create a dbt model called movies_raw_to_curate.sql
+Write unit tests to test your sql
+Run dbt from your local machine
+
+This story requires you to know DBT, so make sure you understand the basics of DBT before starting.
+This is data that is “incremental” ie. you get new records everyday (not the whole dataset), so you need to use the incremental materialisation
+Note: Dont convert timestamp column to datatype timestamp, keep it as numeric. Due to bug in DBT adapter(1.8.4) of Bigquery, conversion to timestamp in unittest always fails.
+
+-------------------------------------------------------------------------------------------------------------------
+8.
+Create Movies rating view in presentation layer
+
+Given the movies and ratings tables exist in the curate layer, create a view called movie_ratings_pres that has the following columns
+Movie_id
+Title
+Number of ratings
+Median rating
+Rank movie by median rating
+
+
+
+To do this you need to
+Use dbt to create the view
+Run dbt locally from your machine
+View must have unit tests
+
+-------------------------------------------------------------------------------------------------------------------
+9.
+Deduplicate Ratings
+
+
+Given an existing rating (same user id and movieId) comes with a different rating value, then
+Both records should be present in the raw layer
+Only the latest record for that (userId, movieId) should be present in the curate layer
+
+-------------------------------------------------------------------------------------------------------------------
+10.
+Load Data via Airflot
+
+Until now you used the choreographed style of loading data. Time to try another style ie. orchestrated.
+In this story you need to
+Install Airflow locally
+Create a DAG called load_movies
+Disable the cloud function that auto loads the file from the bucket
+On running the DAG, it should check the bucket for a new file (older than the latest load date in the movies_raw table)
+If it finds the file, it should load the file the same way you did from the cloud function
+
+-------------------------------------------------------------------------------------------------------------------
+11.
+Data Quality checks
+
+
+Given a non non-numeric id in movies data,
+It should not be loaded into the curate layer
+Create a surrogate key called load_id (it should be an auto generated UUID) on the raw tables (You can add it to Terraform)
+Create an incremental DBT model called load_errors (load_id, table_name)
+The Airflow DAG should
+	1. Run a model that checks for errors and inserts into load_errors if errors
+	2. Run the raw to curate model and pick only those records that are not present in load_errors
+Create another DAG in Airflow called process_errors
+This DAG runs yet another model that picks up erroneous records and loads them if they are fixed
+Deletes the records for load_errors that are loaded into the main table
+Fix the data manually and run process_errors
+
+Load this data for erroneous records.
+
+
+-------------------------------------------------------------------------------------------------------------------
