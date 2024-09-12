@@ -1,13 +1,10 @@
 0. Getting Started
 
-
 If you are reading this then it probably means that you are in a batch of people doing the data engineering mini project. You should have been added to a google group that has access to GCP resources to complete the project. You need to make sure that you choose ee-india-se-data project when accessing the google console. You will have access to bigquery and cloud functions which is enough for the scope of the project.
 
 -------------------------------------------------------------------------------------------------------------------
 1.
 Create Landing Bucket on GCP
-
-
 
 One of the most common things in data engineering is loading data from object stores such as AWS S3 and Google storage. To do that however, we need to have a bucket setup with the right access.
 It is desirable to use an IaC tool such as Terraform to set cloud resources such as buckets.
@@ -81,10 +78,10 @@ Test if the function gets invoked
 This is an example of the “Choreographed” style of data pipeline. In this style, an event such as a file landing on a bucket triggers ingestion. Another way of doing the same thing is by “Orchestration”. An Airflow DAG runs periodically and checks for new files and ingests them when it finds them.
 
 Choreographed Load
-
+Refer img.png
 
 Orchestrated Load
-
+Refer img.png
 
 
 -------------------------------------------------------------------------------------------------------------------
