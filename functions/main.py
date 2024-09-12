@@ -56,6 +56,6 @@ def main(event, context):
     file_name = file['name']
 
     if file_name.startswith('movies'):
-        load_csv_to_bigquery(file_name, bucket_name, movies_table_name)
+        load_csv_to_bigquery(file_name, bucket_name, movies_table_ref)
     elif file_name.startswith('movies'):
-        load_csv_to_bigquery(file_name, bucket_name, ratings_table_name)
+        load_csv_to_bigquery(file_name, bucket_name, ratings_table_ref)
