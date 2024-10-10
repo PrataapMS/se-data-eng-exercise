@@ -1,6 +1,7 @@
 {{
     config(
-        materialized='table'
+        materialized='table',
+        alias='movies_curate'
     )
 }}
 
@@ -39,8 +40,7 @@ WITH raw_data AS (
         vote_average,
         vote_count,
         CURRENT_TIMESTAMP() AS load_time
-    FROM
-        {{ source('movies_data_prataap', 'movies_raw') }}
+    FROM {{ source('movies_data_prataap', 'movies_raw') }}
 )
 
 SELECT * FROM raw_data

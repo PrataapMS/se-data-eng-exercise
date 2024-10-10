@@ -1,0 +1,57 @@
+version: 2
+
+sources:
+  - name: movies_data_prataap
+    tables:
+      - name: movies_raw
+      - name: ratings_raw
+
+models:
+  - name: movies_curate
+    columns:
+      - name: adult
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+      - name: budget
+        tests:
+          - not_null
+          - is_numeric
+      - name: revenue
+        tests:
+          - not_null
+          - is_numeric
+
+  - name: ratings_curate
+    columns:
+      - name: user_id
+        tests:
+          - not_null
+          - assert_type:
+              column_name: user_id
+              expected_type: 'NUMERIC'
+      - name: movie_id
+        tests:
+          - not_null
+          - assert_type:
+              column_name: movie_id
+              expected_type: 'NUMERIC'
+      - name: rating
+        tests:
+          - not_null
+          - assert_type:
+              column_name: rating
+              expected_type: 'NUMERIC'
+      - name: timestamp
+        tests:
+          - not_null
+          - assert_type:
+              column_name: timestamp
+              expected_type: 'NUMERIC'
+      - name: load_time
+        tests:
+          - not_null
+          - assert_type:
+              column_name: load_time
+              expected_type: 'TIMESTAMP'

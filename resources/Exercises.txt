@@ -139,7 +139,7 @@ Move Ratings into curate layer
 
 Given <your_dataset>.ratings.raw has been loaded from a file, move this data into a table/view called <your_dataset>.ratings_curate. The data should be cast to the right data types. For example numbers as NUMERIC, booleans as BOOL, json strings as JSON. It is also good practice to have a load time as a column like the raw layer (it helps in debugging)
 For this you need to
-Create a dbt model called movies_raw_to_curate.sql
+Create a dbt model called ratings_raw_to_curate.sql
 Write unit tests to test your sql
 Run dbt from your local machine
 
@@ -176,7 +176,7 @@ Only the latest record for that (userId, movieId) should be present in the curat
 
 -------------------------------------------------------------------------------------------------------------------
 10.
-Load Data via Airflot
+Load Data via Airflow
 
 Until now you used the choreographed style of loading data. Time to try another style ie. orchestrated.
 In this story you need to
