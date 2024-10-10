@@ -5,6 +5,8 @@ sources:
     tables:
       - name: movies_raw
       - name: ratings_raw
+      - name: movies_curate
+      - name: ratings_curate
 
 models:
   - name: movies_curate
