@@ -7,6 +7,7 @@ sources:
       - name: ratings_raw
       - name: movies_curate
       - name: ratings_curate
+      - name: movie_ratings_pres
 
 models:
   - name: movies_curate
@@ -57,3 +58,38 @@ models:
           - assert_type:
               column_name: load_time
               expected_type: 'TIMESTAMP'
+
+  - name: movie_ratings_pres
+    description: "Generate movies rankings by median rating"
+    columns:
+      - name: movie_id
+        tests:
+          - not_null
+          - unique
+      - name: title
+        tests:
+          - not_null
+      - name: number_of_ratings
+        tests:
+          - not_null
+          - assert_type:
+              column_name: number_of_ratings
+              expected_type: 'INT64'
+      - name: median_rating
+        tests:
+          - not_null
+          - assert_type:
+              column_name: median_rating
+              expected_type: 'FLOAT64'
+      - name: movie_rank
+        tests:
+          - not_null
+          - assert_type:
+              column_name: movie_rank
+              expected_type: 'INT64'
+      - name: bayesian_ranking
+        tests:
+          - not_null
+          - assert_type:
+              column_name: bayesian_ranking
+              expected_type: 'FLOAT64'
